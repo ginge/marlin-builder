@@ -503,7 +503,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		echo('<br/><a href="./tmp/'.$dir.'/Configuration.h">Configuration.h</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Configuration_adv.h">Configuration_adv.h</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Makefile">Makefile</a>');
-		echo('<br/><a href="./tmp/'.$dir.'/marlin.hex">HEX File</a>');
+		echo('<br/><a href="./tmp/'.$dir.'/Marlin.hex">HEX File</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/marlin-'.$dir.'.zip">All of it as a ZIP</a>');
 		//echo ($newconfig);
 		//header("Location: thankyou.html");
