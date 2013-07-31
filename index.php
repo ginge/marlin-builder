@@ -1,3 +1,4 @@
+<?php
 /*
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
     Copyright 2013 
     Barry Carter <barry.carter@gmail.com>
     */
-<?php
+
 $varBaudRate = "115200";
 
 $varMaxFeedX = "250";
@@ -515,6 +516,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
 <html>
 <head>
+	<LINK href="style.css" rel="stylesheet" type="text/css">
 	<title>Ginge's Marlin Builder</title>
 </head>
 
@@ -528,7 +530,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 	?>
 
 	<form action="index.php" method="post">
-		<table>
+		<table id="mytable">
 			<tr>
 				<th></th>
 				<th>Software Basic Configuration</th>
