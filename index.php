@@ -390,7 +390,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		}
 		
 		// create unique dir name
-		$dir = "builder_".time();
+		$dir = "builder_".time().'-'.uniqid();
 		if ( !file_exists($dir) ) {
 		  $old = umask(0); 
 		  mkdir("./tmp/".$dir,0777); 
