@@ -18,7 +18,7 @@
     Barry Carter <barry.carter@gmail.com>
     */
 
-$varBaudRate = "115200";
+$varBaudRate = "250000";
 
 $varMaxFeedX = "250";
 $varMaxFeedY = "250";
@@ -34,14 +34,14 @@ $varHomeRateX = "50";
 $varHomeRateY = "50";
 $varHomeRateZ = "4";
 
-$varNotUseX = True;
-$varNotUseY = True;
-$varNotUseZ = False;
-$varNotUseE = True;
+$varNotUseX = false;
+$varNotUseY = false;
+$varNotUseZ = false;
+$varNotUseE = false;
 
 $varOnlyHoming = False;
 
-$varSoftwareEndstopsEn = false;
+$varSoftwareEndstopsEn = true;
 $varSoftwareEndstopsX = "205";
 $varSoftwareEndstopsY = "205";
 $varSoftwareEndstopsZ = "200";
@@ -81,9 +81,9 @@ $varInvAxisYEn = False;
 $varInvAxisZEn = True;
 $varInvAxisEEn = False;
 
-$varStepsPerUnitX = "78.740";
-$varStepsPerUnitY = "78.740";
-$varStepsPerUnitZ = "533.33";
+$varStepsPerUnitX = "78.7402";
+$varStepsPerUnitY = "78.7402";
+$varStepsPerUnitZ = "533.3333333";
 $varStepsPerUnitE = "865.888";
 
 $varSDCardEn = True;
@@ -95,6 +95,8 @@ $varLCDEn = False;
 $varHardware = 7;
 $varExtruderSensor = 7;
 $varBedSensor = 7;
+
+$varFastFanPwmEn = true;
 
 function chktag($tag)
 {
@@ -120,17 +122,17 @@ function startsWith($haystack, $needle)
 function checkLine($line, $var, $newval)
 {
 	if (empty($line)) {
-	    return $line;
+	    return array($line, false);
 	}
-	
+
 	// If the config keyword is even in this line?
 	if (stristr($line, $var) !== False)
 	{
 	      $parts = explode(' ', $line);
 	      
 	      // ignore the crap
-	      if (!startsWith($line, "#define") && !startsWith($line, "const")) {
-		  return $line;
+	      if (!startsWith(trim($line), "#define") && !startsWith(trim($line), "const") && !startsWith(trim($line), "//")) {
+		  return array($line, false);
 	      }
 	      
 	      // go through every token in the cnofig line
@@ -140,39 +142,40 @@ function checkLine($line, $var, $newval)
 	      $comment = false;
 	      $novalue = false;
 	      $findequals = false;
+	      $found = false; // if we find the keyword
 	      $newstr = "";
 	      $commentval = "";
-	      
+
 	      foreach ($parts as $part)
 	      {
 		  if ($part == "const") {
 		      $findequals = true;
 		  }  
+		  
 		  // found the value after the indent
 		  if ($indent == true && $part != "") {
+
 		      if ($findequals && $part == "=") {
 			  // this is a const var and has an equals after the $var
 			  ;
 		      }
 		      else if (startsWith($part, "//")) {
 			  // this is one of those defines with no value, we can just return the string here
-			  if ($newval == true) {
-				
+			  if ($newval == true || $newval == "deftrue") {
 				if (startsWith($line, "//")) {
-				    return substr(2, strlen($line));
+				    return array(substr($line, 2, strlen($line)-2), true);
 				}
-				else
-				{
-				    return $line;
-				    }
+				else {
+				    return array($line, true);
+				}
 			  }
 			  else {
 				if (startsWith($line, "//")) {
 				  // line is enabled. string those comments
-				    return $line;
+				    return array($line, true);
 				}
 				else {
-				    return "// " . $line;
+				    return array("// " . $line, true);
 				}
 			  }
 		      }
@@ -201,10 +204,16 @@ function checkLine($line, $var, $newval)
 		  //matched the keyword the rest is indents
 		  if ($part == $var && $indent == false && $findingval == false) {
 		      $indent = true;
+		      $found = true;
 		  }
 		  $newstr = $newstr . (($part == "") ? "" : (($newstr=="") ? "" : " ") . $part);
 	      }
 
+	      // if we didnt get the found flag...
+	      if ($found == false) {
+		  return array($line, false);
+	      } 
+	      
 	      // some configs are {1,2,3,4} type config arrays. deal with here
 	      if (is_array($newval)) {
 		  $anewstr = "{";
@@ -222,10 +231,10 @@ function checkLine($line, $var, $newval)
 		  $newval = $anewstr;
 	      }
 		     
-	      return $newstr . (($newstr=="") ? "" : " ") . (($newval=="") ? "" : $newval) . (startsWith($line, "const") ? ";" : "") . (($commentval!="") ?  "      //" . $commentval : "");
+	      return array($newstr . (($newstr=="") ? "" : " ") . (($newval=="" || $newval=="deftrue" ||  $newval=="deffalse") ? "" : $newval) . (startsWith($line, "const") ? ";" : "") . (($commentval!="") ?  "      //" . $commentval : ""), true);
 	}
 	
-	return $line;
+	return array($line, false);
 }
 
 if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
@@ -305,6 +314,8 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 	$varHardware = $_POST["formMachine"];
 	$varExtruderSensor = $_POST["formSensor"];
 	$varBedSensor = $_POST["formBedSensor"];
+	
+	$varFastFanPwmEn = $_POST["formFastFanPwmEn"];
 
 	if(empty($errorMessage)) 
 	{
@@ -314,16 +325,17 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		$arrargs = array(
 		    "BAUDRATE" => $varBaudRate,
 		    "DEFAULT_MAX_ACCELERATION" => array($varMaxAccelX, $varMaxAccelY, $varMaxAccelZ, $varMaxAccelE),
-		    "HOMING_FEEDRATE" => array($varHomeRateX."*60", $varHomeRateX."*60", $varHomeRateX."*60", 0),
+		    "DEFAULT_MAX_FEEDRATE" => array($varMaxFeedX, $varMaxFeedY, $varMaxFeedZ, $varMaxFeedE),
+		    "HOMING_FEEDRATE" => array($varHomeRateX."*60", $varHomeRateY."*60", $varHomeRateZ."*60", 0),
 		    "DISABLE_X" => ($varNotUseX) ? 'true' : 'false',
 		    "DISABLE_Y" => ($varNotUseY) ? 'true' : 'false',
 		    "DISABLE_Z" => ($varNotUseZ) ? 'true' : 'false',
 		    "DISABLE_E" => ($varNotUseE) ? 'true' : 'false',
 		    "max_software_endstops" => ($varSoftwareEndstopsEn) ? 'true' : 'false',
 		    "PIDTEMP" => ($varPIDEn) ? 'true' : 'false',
-		    "DEFAULT_Kp" => $varPIDKp,
-		    "DEFAULT_Ki" => $varPIDKi,
-		    "DEFAULT_Kd" => $varPIDKd,
+		    "DEFAULT_Kp" => $varPIDKp,  // this one is a problem because it is mentioned later. not a problem unless you own a makergear or mendel v9 on 12V
+		    "DEFAULT_Ki" => $varPIDKi,  // this one is a problem
+		    "DEFAULT_Kd" => $varPIDKd,  // this one is a problem
 		    "EXTRUDE_MINTEMP" =>  $varMinExtTemp,
 		    "HEATER_0_MAXTEMP" => $varMaxExtTemp,
 		    "TEMP_HYSTERESIS" => $varM109Hyster,
@@ -353,9 +365,12 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		    "ADVANCE" => ($varExtruderAdvanceEn) ? 'deftrue' : 'deffalse',
 		    "SDSUPPORT" => ($varSDCardEn) ? 'deftrue' : 'deffalse',
 		    "ULTIMAKERCONTROLLER" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',
-		    "ULTIPANEL" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',
-		    "NEWPANEL" => ($varUltipanelClickEn) ? 'deftrue' : 'deffalse',
-		    "ULTRA_LCD" => ($varLCDEn) ? 'deftrue' : 'deffalse',		
+		    "ULTIPANEL" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',  // this is a dupicated key, but the first instance is the one that needs changing. phew.
+		    "ULTRA_LCD" => ($varLCDEn) ? 'deftrue' : 'deffalse',
+		    "FAST_FAN_PWM" => ($varFastFanPwmEn) ? 'deftrue' : 'deffalse',
+		    "TEMP_SENSOR_0" => $varExtruderSensor,
+		    "MOTHERBOARD" => $varHardware,
+		    "TEMP_SENSOR_BED" => $varBedSensor,
 		    "DUMMY" => "111" // To stop me missing the , at the end of this list
 		);
 		
@@ -370,8 +385,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		      $string = preg_replace('~[\r]+~', '', $string);
 		      $newline = "";
 		      foreach ($arrargs as $key => $val) {
-			    $newline = checkLine($string, $key, $val);
-			    if ($string != $newline) { // found a change, so remove stop it looking for the keyword again
+			    $lineobj = checkLine($string, $key, $val);
+			    $newline = $lineobj[0];
+			    $processed = $lineobj[1];
+
+			    if ($processed == true || $processed == "true") { // found a change, so remove stop it looking for the keyword again
 				unset($arrargs[$key]);
 				break;
 			    }
@@ -418,8 +436,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		      $string = preg_replace('~[\r]+~', '', $string);
 		      
 		      foreach ($arrargs as $key => $val) {
-			    $newline = checkLine($string, $key, $val);
-			    if ($string != $newline) { // found a change, so remove stop it looking for the keywork again
+			    $lineobj = checkLine($string, $key, $val);
+			    $newline = $lineobj[0];
+			    $processed = $lineobj[1];
+
+			    if ($processed == true || $processed == "true") { // found a change, so remove stop it looking for the keywork again
 				unset($arrargs[$key]);
 			    }
 		      }
@@ -522,6 +543,8 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 
 <body>
 	<?php
+	//echo(checkLine("//#define ULTIMAKERCONTROLLER //as available from the ultimaker online store.", "ULTIMAKERCONTROLLER", "deftrue"));
+	//echo(checkLine("#define PIDTEMP", "PIDTEMP", "deftrue")[0]);
 		if(!empty($errorMessage)) 
 		{
 			echo("<p>There was an error with your form:</p>\n");
@@ -529,9 +552,16 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		} 
 	?>
         <h1>Ginge's Marlin Builder</h1>
+        <h1>EXTREMELY MASSIVLY EXPERIMENTAL</h1>
+        If ever there was a good use for the blink tag, this is it.
+        <br>
+        <strong>This may eat your dog. Don't try this on your machine unless you are SUPER happy.</strong>
+        <br>
         barry.carter@gmail.com
         <br/>
-        <a href="https://github.com/ginge/marlin-builder">source at GitHub</a>
+        <br />
+        <a href="https://github.com/ginge/marlin-builder">Source for this app at GitHub</a>,
+        <a href="https://github.com/ErikZalm/Marlin">Branched from the ErikZalm Marlin tree</a>
         <br/>
 	<form action="index.php" method="post">
 		<table id="mytable">
@@ -747,9 +777,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td>Heated bed temperature sensor:</td>
                                 <td>
                                         <select name="formBedSensor">
-						<option value="1">100k thermistor - best choice for EPCOS 100k (4.7k pullup)</option>
+						<option value="0">NO heated bed</option>
+						<option value="1">100k thermistor - Usually this one!(4.7k pullup)</option>
                                                 <option value="-1">thermocouple with AD595</option>
                                                 <option value="-2">thermocouple with MAX6675 (only for sensor 0)</option>
+                                                
 						<option value="2">200k thermistor - ATC Semitec 204GT-2 (4.7k pullup)</option>
 						<option value="3">mendel-parts thermistor (4.7k pullup)</option>
 						<option value="4">10k thermistor !! do not use it for a hotend. It gives bad resolution at high temp. !!</option>
@@ -805,6 +837,17 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 </td> 
                                 <td></td>
                         </tr>
+                        <tr>
+				<th></th>
+				<th>Hardware Experimental</th>
+				<th>?</th>
+			<tr>
+			<tr>
+                                <td>Increase PWM frequency:</td>
+                                <td><input type="checkbox" name="formFastFanPwmEn" <?php echo(chktag($varFastFanPwmEn));?> value="1"/>
+                                </td> 
+                                <td></td>
+                        </tr>
 			<tr>
 				<th></th>
 				<th>Hardware Addons</th>
@@ -817,9 +860,8 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td></td>
                         </tr>
                         <tr>
-                                <td>Enable UntiPanel:</td>
+                                <td>Enable UltiPanel:</td>
                                 <td><input type="checkbox" name="formUltipanelEn" <?php echo(chktag($varUltipanelEn));?> value="1"/>
-                                    + click encoder: <input type="checkbox" name="formUltipanelClickEn" <?php echo(chktag($varUltipanelClickEn));?> value="1"/>
                                 </td> 
                                 <td></td>
                         </tr>
