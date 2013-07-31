@@ -72,3 +72,14 @@ th.specalt {
 input[type="text"] {
     width: 80px;
 }
+
+.button {
+}
+.big {
+    width: 200px;
+    height: 150px;
+    font-size: 2em;
+    position: relative;
+    float: right;
+    
+}

@@ -367,7 +367,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		    "ULTIMAKERCONTROLLER" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',
 		    "ULTIPANEL" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',  // this is a dupicated key, but the first instance is the one that needs changing. phew.
 		    "ULTRA_LCD" => ($varLCDEn) ? 'deftrue' : 'deffalse',
-		    "FAST_FAN_PWM" => ($varFastFanPwmEn) ? 'deftrue' : 'deffalse',
+		    "FAST_PWM_FAN" => ($varFastFanPwmEn) ? 'deftrue' : 'deffalse',
 		    "TEMP_SENSOR_0" => $varExtruderSensor,
 		    "MOTHERBOARD" => $varHardware,
 		    "TEMP_SENSOR_BED" => $varBedSensor,
@@ -537,7 +537,12 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
 <html>
 <head>
-	<LINK href="style.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+
+	<script src="tooltip.js"></script>
+	<link href="style.css" rel="stylesheet" type="text/css">
 	<title>Ginge's Marlin Builder</title>
 </head>
 
@@ -568,12 +573,12 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 			<tr>
 				<th></th>
 				<th>Software Basic Configuration</th>
-				<th>?</th>
+				<th></th>
 			</tr>
 			<tr>
 				<td>Baud Rate:</td>
 				<td><input type="text" name="formBaudRate" value="<?php echo($varBaudRate);?>" /></td>
-				<td></td>
+				<td id="rowBaudRate">?</td>
 			</tr>
 			<tr>
                                 <td>Max Feed Rate:</td>
@@ -582,7 +587,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 				    Z:<input type="text" name="formMaxFeedZ" value="<?php echo($varMaxFeedZ);?>" />
 				    E:<input type="text" name="formMaxFeedE" value="<?php echo($varMaxFeedE);?>" />
 				</td>
-                                <td></td>
+                                <td id="rowMaxFeed">?</td>
 			</tr>
                         <tr>
                                 <td>Max Acceleration Rate:</td>
@@ -591,7 +596,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                     Z:<input type="text" name="formMaxAccelZ" value="<?php echo($varMaxAccelZ);?>" />
                                     E:<input type="text" name="formMaxAccelE" value="<?php echo($varMaxAccelE);?>" />
                                 </td> 
-                                <td></td>
+                                <td id="rowMaxAccel">?</td>
                         </tr>
 			<tr>
                                 <td>Homing Feed Rate:</td>
@@ -599,7 +604,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                     Y:<input type="text" name="formHomeRateY" value="<?php echo($varHomeRateY);?>" />
                                     Z:<input type="text" name="formHomeRateZ" value="<?php echo($varHomeRateZ);?>" />
                                 </td> 
-                                <td></td>
+                                <td id="rowHomeRate">?</td>
                         </tr>
 			<tr>
 				<td>Disable axis when not in use:</td>
@@ -608,13 +613,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 				    Z:<input type="checkbox" name="formNotUseZ" <?php echo(chktag($varNotUseZ));?> value="<?php echo($varNotUseZ);?>"/>
 				    E:<input type="checkbox" name="formNotUseE" <?php echo(chktag($varNotUseE));?> value="<?php echo($varNotUseE);?>"/>
 				</td>
-				<td></td>
+				<td id="rowNotUse">?</td>
 			</tr>
                         <tr>
                                 <td>Endstop only for homing:</td>
                                 <td><input type="checkbox" name="formOnlyHoming" value="<?php echo($varOnlyHoming);?>" />
                                 </td>
-                                <td></td>
+                                <td id="rowOnlyHoming">?</td>
                         </tr>
                         <tr>
                                 <td>Software Endstops:</td>
@@ -624,50 +629,50 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 				    max Z:<input type="text" name="formSoftwareEndstopsZ" <?php echo(chktag($varSoftwareEndstopsZ));?> value="<?php echo($varSoftwareEndstopsZ);?>"/>
 
                                 </td>
-                                <td></td>
+                                <td id="rowSoftwareEndstops">?</td>
                         </tr>
 			<tr>
 				<th></th>
 				<th>Software Advanced</th>
 				<th></th>
 			<tr>
-                        <tr> 
+                        <tr>
                                 <td>Enable PID temperature control:</td>
                                 <td>Enable: <input type="checkbox" name="formPIDEn" <?php echo(chktag($varPIDEn));?> /> 
                                     Kp:<input type="text" name="formPIDKp" value="<?php echo($varPIDKp);?>" />
                                     Ki:<input type="text" name="formPIDKi" value="<?php echo($varPIDKi);?>" />
                                     Kd:<input type="text" name="formPIDKd" value="<?php echo($varPIDKd);?>" />
                                 </td> 
-                                <td></td>
+                                <td id="rowPIDEn">?</td>
                         </tr>
-                        <tr> 
+                        <tr>
                                 <td>Add extrusion speed to PID:</td>
                                 <td>Enable: <input type="checkbox" name="formPIDSpeedEn" <?php echo(chktag($varPIDSpeedEn));?> value="<?php echo($varPIDSpeedEn);?>" />
                                     <input type="text" name="formPIDKc" value="<?php echo($varPIDKc);?>" />                             
                                 </td> 
-                                <td></td>
+                                <td id="rowPIDSpeed">?</td>
                         </tr>
                         <tr>
                                 <td>Minimum extrusion temperature:</td>
                                 <td><input type="text" name="formMinExtTemp" value="<?php echo($varMinExtTemp);?>" /></td>
-                                <td></td>
+                                <td id="rowMinExtTemp">?</td>
                         </tr>
                         <tr>
                                 <td>Maximum extrusion temperature:</td>
                                 <td><input type="text" name="formMaxExtTemp" value="<?php echo($varMaxExtTemp);?>" /></td>
-                                <td></td>
+                                <td id="rowMaxExtTemp">?</td>
                         </tr>
                         <tr>
                                 <td>M109 Params:</td>
                                 <td>Hysteresis:<input type="text" name="formM109Hyster" value="<?php echo($varM109Hyster);?>" />
                                     Wait Time:<input type="text" name="formM109Wait" value="<?php echo($varM109Wait);?>" />
-                                <td></td>
+                                <td id="rowM109Hyter">?</td>
 			</tr>
                         <tr>
                                 <td>AD595 Calibration:</td>
                                 <td>Gain:<input type="text" name="formAD595Gain" value="<?php echo($varAD595Gain);?>" />
                                     Offset:<input type="text" name="formAD595Offset" value="<?php echo($varAD595Offset);?>" /></td>
-                                <td></td>
+                                <td id="AD595Gain">?</td>
                         </tr>
                         <tr>
                                 <th></th>
@@ -678,31 +683,31 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td>Enable auto temp:</td>
                                 <td><input type="checkbox" name="formAutoTempEn" <?php echo(chktag($varAutoTempEn));?> value="<?php echo($varAutoTempEn);?>"/>
                                 </td>
-                                <td></td>
+                                <td id="rowAutoTempEn">?</td>
                         </tr>
                         <tr>
                                 <td>Late Z enable:</td>
                                 <td><input type="checkbox" name="formLateZEn" <?php echo(chktag($varLateZEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowLateZ">?</td>
                         </tr>
                         <tr>
                                 <td>Enable watchdog:</td>
                                 <td><input type="checkbox" name="formWatchdogEn" <?php echo(chktag($varWatchdogEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowWatchDog">?</td>
                         </tr>
                         <tr>
                                 <td>Extruder runout protection:</td>
                                 <td><input type="checkbox" name="formExtruderRunoutEn" <?php echo(chktag($varExtruderRunoutEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowExtruderRunout">?</td>
                         </tr>
                         <tr>
                                 <td>Enable extruder advance:</td>
                                 <td><input type="checkbox" name="formExtruderAdvanceEn" <?php echo(chktag($varExtruderAdvanceEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowExtruderAdvance">?</td>
                         </tr>
                         <tr>
                                 <th></th>
@@ -747,7 +752,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 						<option value="21">Elefu Ra Board (v3)</option>
 					</select>
 				</td>
-                                <td></td>
+                                <td id="rowhardware">?</td>
                         </tr>
                         <tr>
                         	<td>Extruder temperature sensor:</td>
@@ -771,7 +776,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 						<option value="55">100k thermistor - ATC Semitec 104GT-2 (Used in ParCan) (1k pullup)</option>
                                         </select>
                                 </td>
-                                <td></td>
+                                <td id="rowSensor">?</td>
                         </tr>
                         <tr>
                                 <td>Heated bed temperature sensor:</td>
@@ -797,13 +802,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 						<option value="55">100k thermistor - ATC Semitec 104GT-2 (Used in ParCan) (1k pullup)</option>
                                         </select>
                                 </td>
-                                <td></td>
+                                <td  id="rowBedSensor">?</td>
                         </tr>
                         <tr>
                                 <td>Enable endstop pullup resistors:</td>
                                 <td><input type="checkbox" name="formEndstopPullupEn" <?php echo(chktag($varEndstopPullupEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowEndstopPullup">?</td>
                         </tr>
                         <tr>
                                 <td>Endstops are inverted:</td>
@@ -811,13 +816,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                     <input type="checkbox" name="formEndstopInvertedYEn" <?php echo(chktag($varEndstopInvertedYEn));?> value="1"/>
                                     <input type="checkbox" name="formEndstopInvertedZEn" <?php echo(chktag($varEndstopInvertedZEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowEndstopInverted">?</td>
                         </tr>
                         <tr>
                                 <td>Enable pins are active low:</td>
                                 <td><input type="checkbox" name="formEnPinsActiveLowEn" <?php echo(chktag($varEnPinsActiveLowEn));?> value="1" />
                                 </td>
-                                <td></td>
+                                <td id="rowEnPinsActiveLow">?</td>
                         </tr>
                         <tr> 
                                 <td>Invert axis:</td>
@@ -826,7 +831,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                     Z:<input type="checkbox" name="formInvAxisZEn" <?php echo(chktag($varInvAxisZEn));?> value="1"/>
                                     E:<input type="checkbox" name="formInvAxisEEn" <?php echo(chktag($varInvAxisEEn));?> value="1"/>
                                 </td> 
-                                <td></td>
+                                <td id="rowInvAxis">?</td>
                         </tr>
                         <tr>
                                 <td>Steps Per Unit:</td>
@@ -835,7 +840,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                     Z:<input type="text" name="formStepsPerUnitZ" value="<?php echo($varStepsPerUnitZ);?>" />
                                     E:<input type="text" name="formStepsPerUnitE" value="<?php echo($varStepsPerUnitE);?>" />
                                 </td> 
-                                <td></td>
+                                <td id="rowStepsPerUnit">?</td>
                         </tr>
                         <tr>
 				<th></th>
@@ -846,7 +851,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td>Increase PWM frequency:</td>
                                 <td><input type="checkbox" name="formFastFanPwmEn" <?php echo(chktag($varFastFanPwmEn));?> value="1"/>
                                 </td> 
-                                <td></td>
+                                <td id="rowFastFanPwm">?</td>
                         </tr>
 			<tr>
 				<th></th>
@@ -857,22 +862,27 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td>Enable SD Card:</td>
                                 <td><input type="checkbox" name="formSDCardEn" <?php echo(chktag($varSDCardEn));?> value="1"/>
                                 </td>
-                                <td></td>
+                                <td id="rowSDCard">?</td>
                         </tr>
                         <tr>
                                 <td>Enable UltiPanel:</td>
                                 <td><input type="checkbox" name="formUltipanelEn" <?php echo(chktag($varUltipanelEn));?> value="1"/>
                                 </td> 
-                                <td></td>
+                                <td  id="rowUltipanel">?</td>
                         </tr>
                         <tr>
                                 <td>Enable generic 16x2 LCD:</td>
                                 <td><input type="checkbox" name="formLCDEn" <?php echo(chktag($varLCDEn));?> value="1"/>
                                 </td> 
-                                <td></td>
+                                <td id="rowLCD">?</td>
+                        </tr>
+                        <tr>
+                                <th></th>
+                                <th><input type="submit" name="formSubmit" value="Build It" class="button big"/></th> 
+                                <th></th>
                         </tr>
 		</table>
-		<input type="submit" name="formSubmit" value="Build It" />
+		
 	</form>
 </body>
 </html>
