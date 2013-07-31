@@ -528,7 +528,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 			echo("<ul>" . $errorMessage . "</ul>\n");
 		} 
 	?>
-
+        <h1>Ginge's Marlin Builder</h1>
+        barry.carter@gmail.com
+        <br/>
+        <a href="https://github.com/ginge/marlin-builder">source at GitHub</a>
+        <br/>
 	<form action="index.php" method="post">
 		<table id="mytable">
 			<tr>
