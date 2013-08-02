@@ -20,14 +20,14 @@
 
 $varBaudRate = "250000";
 
-$varMaxFeedX = "250";
-$varMaxFeedY = "250";
+$varMaxFeedX = "350";
+$varMaxFeedY = "350";
 $varMaxFeedZ = "10";
-$varMaxFeedE = "45";
+$varMaxFeedE = "25";
 
 $varMaxAccelX = "9000";
 $varMaxAccelY = "9000";
-$varMaxAccelZ = "100";
+$varMaxAccelZ = "200";
 $varMaxAccelE = "10000";
 
 $varHomeRateX = "50";
@@ -98,6 +98,10 @@ $varBedSensor = 7;
 
 $varFastFanPwmEn = true;
 
+$varFixPIDRange = false;
+
+$varPIDDebug = false;
+
 function chktag($tag)
 {
     if ($tag == false) 
@@ -115,12 +119,28 @@ function startsWith($haystack, $needle)
     return !strncmp($haystack, $needle, strlen($needle));
 }
 
+function commentLine($line, $commented) {
+	if (startsWith($line, "//")) {
+		if ($commented) {
+		    return $line;
+		}
+		else {
+		    return trim(substr($line, 2, strlen($line)-2));
+		}
+	}
+	else {
+		return "//".$line;
+	}
+}
 
 // Checks a line from configuration* and updates any found value.
 // This is a box of magic. Do not touch unless you want to break stuff.
 // it has to take into account defines, const values and also comments.
-function checkLine($line, $var, $newval)
+function checkLine($line, $confobj)
 {
+	$var = $confobj->Name;
+	$newval = $confobj->Value;
+	
 	if (empty($line)) {
 	    return array($line, false);
 	}
@@ -154,30 +174,14 @@ function checkLine($line, $var, $newval)
 		  
 		  // found the value after the indent
 		  if ($indent == true && $part != "") {
-
+		      
 		      if ($findequals && $part == "=") {
 			  // this is a const var and has an equals after the $var
 			  ;
 		      }
 		      else if (startsWith($part, "//")) {
 			  // this is one of those defines with no value, we can just return the string here
-			  if ($newval == true || $newval == "deftrue") {
-				if (startsWith($line, "//")) {
-				    return array(substr($line, 2, strlen($line)-2), true);
-				}
-				else {
-				    return array($line, true);
-				}
-			  }
-			  else {
-				if (startsWith($line, "//")) {
-				  // line is enabled. string those comments
-				    return array($line, true);
-				}
-				else {
-				    return array("// " . $line, true);
-				}
-			  }
+			  return array(commentLine($line, $newval), true);
 		      }
 		      else
 		      {
@@ -203,6 +207,9 @@ function checkLine($line, $var, $newval)
 		  } 
 		  //matched the keyword the rest is indents
 		  if ($part == $var && $indent == false && $findingval == false) {
+		      if (in_array("define", $confobj->Options)) {
+			  return array(commentLine($line, $newval), true);
+		      }
 		      $indent = true;
 		      $found = true;
 		  }
@@ -231,11 +238,27 @@ function checkLine($line, $var, $newval)
 		  $newval = $anewstr;
 	      }
 		     
-	      return array($newstr . (($newstr=="") ? "" : " ") . (($newval=="" || $newval=="deftrue" ||  $newval=="deffalse") ? "" : $newval) . (startsWith($line, "const") ? ";" : "") . (($commentval!="") ?  "      //" . $commentval : ""), true);
+	      return array($newstr . (($newstr=="") ? "" : " ") . (($newval=="" || in_array("define", $confobj->Options)) ? "" : $newval) . (startsWith($line, "const") ? ";" : "") . (($commentval!="") ?  "      //" . $commentval : ""), true);
 	}
 	
 	return array($line, false);
 }
+
+class Option {
+    public $Name = "";      // The config key name to find
+    public $Value = "";     // The new value for the key
+    public $Options = array();   // Options for the config. Valid options are: "ignore": doesn't change the config. "define": flags this as a define with no value
+    public $HardwareId = -1;  // Optional hardware ID for the config option. Allows sections to be controlled by hardware type
+    public $SectionIdentifier = "";  //Closest line of code before our config option. i.e #ifdef SOMEOPTION
+}
+
+
+if (isset($_GET['dotests'])) {
+    include "tests.php";
+    doAllTests();
+    return;
+}
+
 
 if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 {
@@ -316,63 +339,79 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 	$varBedSensor = $_POST["formBedSensor"];
 	
 	$varFastFanPwmEn = $_POST["formFastFanPwmEn"];
+	
+	$varFixPIDRange =  $_POST["formFixPIDRange"];
+	
+	$varPIDDebug = $_POST["formPIDDebug"];
 
+	$arrclass = array();
+	
+	function l($name, $value, $options = array()) {
+	    global $arrclass;
+	    $c = new Option();
+	    $c->Name = $name;
+	    $c->Value = $value;
+	    $c->Options = $options;
+	    array_push($arrclass, $c);
+	}
+	
 	if(empty($errorMessage)) 
 	{
 		$newconfig = "";
 		
-		// This holds all of the config keys and the associated variable
-		$arrargs = array(
-		    "BAUDRATE" => $varBaudRate,
-		    "DEFAULT_MAX_ACCELERATION" => array($varMaxAccelX, $varMaxAccelY, $varMaxAccelZ, $varMaxAccelE),
-		    "DEFAULT_MAX_FEEDRATE" => array($varMaxFeedX, $varMaxFeedY, $varMaxFeedZ, $varMaxFeedE),
-		    "HOMING_FEEDRATE" => array($varHomeRateX."*60", $varHomeRateY."*60", $varHomeRateZ."*60", 0),
-		    "DISABLE_X" => ($varNotUseX) ? 'true' : 'false',
-		    "DISABLE_Y" => ($varNotUseY) ? 'true' : 'false',
-		    "DISABLE_Z" => ($varNotUseZ) ? 'true' : 'false',
-		    "DISABLE_E" => ($varNotUseE) ? 'true' : 'false',
-		    "max_software_endstops" => ($varSoftwareEndstopsEn) ? 'true' : 'false',
-		    "PIDTEMP" => ($varPIDEn) ? 'true' : 'false',
-		    "DEFAULT_Kp" => $varPIDKp,  // this one is a problem because it is mentioned later. not a problem unless you own a makergear or mendel v9 on 12V
-		    "DEFAULT_Ki" => $varPIDKi,  // this one is a problem
-		    "DEFAULT_Kd" => $varPIDKd,  // this one is a problem
-		    "EXTRUDE_MINTEMP" =>  $varMinExtTemp,
-		    "HEATER_0_MAXTEMP" => $varMaxExtTemp,
-		    "TEMP_HYSTERESIS" => $varM109Hyster,
-		    "TEMP_RESIDENCY_TIME" => $varM109Wait,
-		    "ENDSTOPPULLUPS" => ($varEndstopPullupEn) ? 'true' : 'false',
-		    "X_ENDSTOPS_INVERTING" => ($varEndstopInvertedXEn) ? 'true' : 'false',
-		    "Y_ENDSTOPS_INVERTING" => ($varEndstopInvertedYEn) ? 'true' : 'false',
-		    "Z_ENDSTOPS_INVERTING" =>($varEndstopInvertedZEn) ? 'true' : 'false',
-		    "X_ENABLE_ON" => ($varEnPinsActiveLowEn) ? '0' : '1',   // this is backwards I know
-		    "Y_ENABLE_ON" => ($varEnPinsActiveLowEn) ? '0' : '1',   // this is backwards I know
-		    "Z_ENABLE_ON" => ($varEnPinsActiveLowEn) ? '0' : '1',   // this is backwards I know
-		    "E_ENABLE_ON" =>($varEnPinsActiveLowEn) ? '0' : '1',   // this is backwards I know
-		    "INVERT_X_DIR" => ($varInvAxisXEn) ? 'true' : 'false',
-		    "INVERT_Y_DIR" => ($varInvAxisYEn) ? 'true' : 'false',
-		    "INVERT_Z_DIR" => ($varInvAxisZEn) ? 'true' : 'false',
-		    "INVERT_E0_DIR" => ($varInvAxisEEn) ? 'true' : 'false',
-		    "DEFAULT_AXIS_STEPS_PER_UNIT" => array($varStepsPerUnitX, $varStepsPerUnitY, $varStepsPerUnitZ, $varStepsPerUnitE),
-		    "USE_WATCHDOG" => ($varWatchdogEn) ? 'deftrue' : 'deffalse',
-		    "AUTOTEMP" => ($varAutoTempEn) ? 'deftrue' : 'deffalse',
-		    "ENDSTOPS_ONLY_FOR_HOMING" => ($varOnlyHoming) ? 'deftrue' : 'deffalse',
-		    "PIDTEMP" => ($varPIDSpeedEn) ? 'deftrue' : 'deffalse',
-		    "DEFAULT_Kc" => '('. $varPIDKc .')',
-		    "TEMP_SENSOR_AD595_GAIN" => $varAD595Gain,
-		    "TEMP_SENSOR_AD595_OFFSET" => $varAD595Offset,
-		    "Z_LATE_ENABLE" => ($varLateZEn) ? 'deftrue' : 'deffalse',
-		    "EXTRUDER_RUNOUT_PREVENT" => ($varExtruderRunoutEn) ? 'deftrue' : 'deffalse',
-		    "ADVANCE" => ($varExtruderAdvanceEn) ? 'deftrue' : 'deffalse',
-		    "SDSUPPORT" => ($varSDCardEn) ? 'deftrue' : 'deffalse',
-		    "ULTIMAKERCONTROLLER" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',
-		    "ULTIPANEL" => ($varUltipanelEn) ? 'deftrue' : 'deffalse',  // this is a dupicated key, but the first instance is the one that needs changing. phew.
-		    "ULTRA_LCD" => ($varLCDEn) ? 'deftrue' : 'deffalse',
-		    "FAST_PWM_FAN" => ($varFastFanPwmEn) ? 'deftrue' : 'deffalse',
-		    "TEMP_SENSOR_0" => $varExtruderSensor,
-		    "MOTHERBOARD" => $varHardware,
-		    "TEMP_SENSOR_BED" => $varBedSensor,
-		    "DUMMY" => "111" // To stop me missing the , at the end of this list
-		);
+		
+		l("BAUDRATE", $varBaudRate);
+		l("DEFAULT_MAX_ACCELERATION", array($varMaxAccelX, $varMaxAccelY, $varMaxAccelZ, $varMaxAccelE));
+		l("DEFAULT_MAX_FEEDRATE", array($varMaxFeedX, $varMaxFeedY, $varMaxFeedZ, $varMaxFeedE));
+		l("HOMING_FEEDRATE", array($varHomeRateX."*60", $varHomeRateY."*60", $varHomeRateZ."*60", 0));
+		l("DISABLE_X", ($varNotUseX) ? 'true' : 'false');
+		l("DISABLE_Y", ($varNotUseY) ? 'true' : 'false');
+		l("DISABLE_Z", ($varNotUseZ) ? 'true' : 'false');
+		l("DISABLE_E", ($varNotUseE) ? 'true' : 'false');
+		l("max_software_endstops", ($varSoftwareEndstopsEn) ? 'true' : 'false');
+		l("PIDTEMP", $varPIDEn, array("define"));
+		l("DEFAULT_Kp", $varPIDKp);  // this one is a problem because it is mentioned later. not a problem unless you own a makergear or mendel v9 on 12V
+		l("DEFAULT_Ki", $varPIDKi);  // this one is a problem
+		l("DEFAULT_Kd", $varPIDKd);  // this one is a problem
+		l("EXTRUDE_MINTEMP",  $varMinExtTemp);
+		l("HEATER_0_MAXTEMP", $varMaxExtTemp);
+		l("TEMP_HYSTERESIS", $varM109Hyster);
+		l("TEMP_RESIDENCY_TIME", $varM109Wait);
+		l("ENDSTOPPULLUPS", $varEndstopPullupEn, array("define"));
+		l("X_ENDSTOPS_INVERTING", ($varEndstopInvertedXEn) ? 'true' : 'false');
+		l("Y_ENDSTOPS_INVERTING", ($varEndstopInvertedYEn) ? 'true' : 'false');
+		l("Z_ENDSTOPS_INVERTING",($varEndstopInvertedZEn) ? 'true' : 'false');
+		l("X_ENABLE_ON", ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
+		l("Y_ENABLE_ON", ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
+		l("Z_ENABLE_ON", ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
+		l("E_ENABLE_ON",($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
+		l("INVERT_X_DIR", ($varInvAxisXEn) ? 'true' : 'false');
+		l("INVERT_Y_DIR", ($varInvAxisYEn) ? 'true' : 'false');
+		l("INVERT_Z_DIR", ($varInvAxisZEn) ? 'true' : 'false');
+		l("INVERT_E0_DIR", ($varInvAxisEEn) ? 'true' : 'false');
+		l("DEFAULT_AXIS_STEPS_PER_UNIT", array($varStepsPerUnitX, $varStepsPerUnitY, $varStepsPerUnitZ, $varStepsPerUnitE));
+		l("USE_WATCHDOG", $varWatchdogEn, array("define"));
+		l("AUTOTEMP", $varAutoTempEn, array("define"));
+		l("ENDSTOPS_ONLY_FOR_HOMING", $varOnlyHoming, array("define"));
+		l("PIDTEMP", $varPIDSpeedEn, array("define"));
+		l("DEFAULT_Kc", '('. $varPIDKc .')');
+		l("TEMP_SENSOR_AD595_GAIN", $varAD595Gain);
+		l("TEMP_SENSOR_AD595_OFFSET", $varAD595Offset);
+		l("Z_LATE_ENABLE", $varLateZEn, array("define"));
+		l("EXTRUDER_RUNOUT_PREVENT", $varExtruderRunoutEn, array("define"));
+		l("ADVANCE", $varExtruderAdvanceEn, array("define"));
+		l("SDSUPPORT", $varSDCardEn, array("define"));
+		l("ULTIMAKERCONTROLLER", $varUltipanelEn, array("define"));
+		l("ULTIPANEL", $varUltipanelEn, array("define"));  // this is a dupicated key, but the first instance is th one that needs changing. phew.
+		l("ULTRA_LCD", $varLCDEn, array("define"));
+		l("FAST_PWM_FAN", $varFastFanPwmEn, array("define"));
+		l("TEMP_SENSOR_0", $varExtruderSensor);
+		l("MOTHERBOARD", $varHardware);
+		l("TEMP_SENSOR_BED", $varBedSensor);
+		l("PID_FUNCTIONAL_RANGE", ($varFixPIDRange) ? 1000 : 10);
+		l("PID_DEBUG", $varPIDDebug);
+
+
 		
 		//first parse config file
 		$file_handle = fopen("Configuration.h", "rb");
@@ -384,13 +423,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		      $string = preg_replace('~[\n]+~', '', $string);
 		      $string = preg_replace('~[\r]+~', '', $string);
 		      $newline = "";
-		      foreach ($arrargs as $key => $val) {
-			    $lineobj = checkLine($string, $key, $val);
+		      foreach ($arrclass as $key => $val) {
+			    $lineobj = checkLine($string, $val);
 			    $newline = $lineobj[0];
 			    $processed = $lineobj[1];
 
 			    if ($processed == true || $processed == "true") { // found a change, so remove stop it looking for the keyword again
-				unset($arrargs[$key]);
+				unset($arrclass[$key]);
 				break;
 			    }
 		      }
@@ -435,13 +474,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		      $string = preg_replace('~[\n]+~', '', $string);
 		      $string = preg_replace('~[\r]+~', '', $string);
 		      
-		      foreach ($arrargs as $key => $val) {
-			    $lineobj = checkLine($string, $key, $val);
+		      foreach ($arrclass as $key => $val) {
+			    $lineobj = checkLine($string, $val);
 			    $newline = $lineobj[0];
 			    $processed = $lineobj[1];
 
 			    if ($processed == true || $processed == "true") { // found a change, so remove stop it looking for the keywork again
-				unset($arrargs[$key]);
+				unset($arrclass[$key]);
 			    }
 		      }
 		      
@@ -449,7 +488,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		     
 		      // End of file pretty much. Check what params we have left and stuff them in the file
 		      if ($line_of_text == "#endif //__CONFIGURATION_ADV_H") {
-			    foreach ($arrargs as $key => $arg) {
+			    foreach ($arrclass as $key => $arg) {
 				if ($arg == "deftrue"   ) {
 				    $newline = $newline . "\r\n#define " . $key ."\r\n";
 				}
@@ -499,6 +538,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		shell_exec('cp ./tmp/'.$dir.'/Marlin/Marlin/build_summary.txt ./tmp/'.$dir.'/ > /dev/null 2>&1');
 		shell_exec('rm -rf ./tmp/'.$dir.'/Marlin > /dev/null 2>&1');
 		shell_exec('zip ./tmp/'.$dir.'/marlin-'.$dir.'.zip Makefile Configuration.h Configuration_adv.h Marlin.hex build_summary.txt > /dev/null 2>&1');
+		shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration.h ./tmp/Marlin/Marlin/Configuration.h > ./tmp/'.$dir.'/config_diff.diff');
 		
 		// generate build summary
 		$summaryarr = file("./tmp/".$dir."/build_summary.txt");
@@ -521,11 +561,13 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		echo("<br><br><h2>Build Summary</h2>");
 		echo("<pre>".$newsum."</pre>");
 		echo("<br><h2>Download Files</h2>");
+		echo("<br>you should take a good close look at <strong>Configuration.h and Configuration_adv.h</strong> Learn the features. Check the parameters. Is it sane? Is it safe?<br/><br/>");
 		echo('<a href="./tmp/'.$dir.'/build_summary.txt">Build Summary</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Configuration.h">Configuration.h</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Configuration_adv.h">Configuration_adv.h</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Makefile">Makefile</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/Marlin.hex">HEX File</a>');
+		echo('<br/><a href="./tmp/'.$dir.'/config_diff.diff">Diff of Configuration.h changes</a>');
 		echo('<br/><a href="./tmp/'.$dir.'/marlin-'.$dir.'.zip">All of it as a ZIP</a>');
 		//echo ($newconfig);
 		//header("Location: thankyou.html");
@@ -557,10 +599,10 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		} 
 	?>
         <h1>Ginge's Marlin Builder</h1>
-        <h1>EXTREMELY MASSIVLY EXPERIMENTAL</h1>
+        <h1>EXTREMELY MASSIVELY EXPERIMENTAL</h1>
         If ever there was a good use for the blink tag, this is it.
         <br>
-        <strong>This may eat your dog. Don't try this on your machine unless you are SUPER happy.</strong>
+        <div class="dog"><strong>This may eat your dog. Don't try this on your machine unless you are SUPER happy.</strong></div>
         <br>
         barry.carter@gmail.com
         <br/>
@@ -852,6 +894,18 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
                                 <td><input type="checkbox" name="formFastFanPwmEn" <?php echo(chktag($varFastFanPwmEn));?> value="1"/>
                                 </td> 
                                 <td id="rowFastFanPwm">?</td>
+                        </tr>
+                        <tr>
+                                <td>Enable PID debug output:</td>
+                                <td><input type="checkbox" name="formPIDDebug" <?php echo(chktag($varPIDDebug));?> value="1"/>
+                                </td> 
+                                <td id="rowPIDDebug">?</td>
+                        </tr>
+			<tr>
+                                <td>Fix PID heatup time:</td>
+                                <td><input type="checkbox" name="formFixPIDRange" <?php echo(chktag($varFixPIDRange));?> value="1"/>
+                                </td> 
+                                <td id="rowFixPIDRange">?</td>
                         </tr>
 			<tr>
 				<th></th>

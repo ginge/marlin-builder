@@ -52,4 +52,6 @@ var tooltipArray = {
 "rowSDCard"            : 'Enable the SD card feature in the firmware. Allows you to run gcode from an SD card.',
 "rowLCD"               : 'General 16x2 LCD panel support',
 "rowFastFanPwm"        : 'Increases the PWM freqency of the cooling FAN, this removes the noise when running the fan on lower levels, but increases heat in the controlling circuits.',
+"rowFixPIDRange"       : 'Fix PID heatup speed bug. This is a workaround until we sync with https://github.com/ErikZalm/Marlin/commit/a504c883468829d487f63a048996fe0db037daf2.',
+"rowPIDDebug"          : "Enable PID Debugging output. This is mainly for Cura's new graphs",
 };
