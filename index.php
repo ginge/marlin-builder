@@ -517,12 +517,14 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
             if (startsWith($line_of_text, "HARDWARE_MOTHERBOARD")) { // we found it
                 $line_of_text = "HARDWARE_MOTHERBOARD ?= ". $varHardware ."\r\n";
             }
-
-            if (startsWith($line_of_text, "ARDUINO_INSTALL_DIR")) { // we found it
+            else if (startsWith($line_of_text, "ARDUINO_INSTALL_DIR")) { // we found it
                 $line_of_text = "ARDUINO_INSTALL_DIR  ?= ../../../arduino-0022\r\n";
             }
-            if (startsWith($line_of_text, "ARDUINO_VERSION")) { // we found it
+            else if (startsWith($line_of_text, "ARDUINO_VERSION")) { // we found it
                 $line_of_text = "ARDUINO_VERSION      ?= 22\r\n";
+            }
+            else if (startsWith($line_of_text, "UPLOAD_RATE")) { // we found it
+                $line_of_text = "UPLOAD_RATE        ?= ".$varBaudRate\r\n";
             }
               
             $newconfig = $newconfig . $line_of_text."";
