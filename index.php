@@ -120,16 +120,21 @@ function startsWith($haystack, $needle)
 }
 
 function commentLine($line, $commented) {
-	if (startsWith($line, "//")) {
-		if ($commented) {
+	if (startsWith(trim($line), "//")) {
+		if ($commented == false) {
 		    return $line;
 		}
 		else {
-		    return trim(substr($line, 2, strlen($line)-2));
+		    return substr(trim($line), 2, strlen($line)-2);
 		}
 	}
 	else {
-		return "//".$line;
+		if ($commented == false) {
+		    return "//".$line;
+		}
+		else {
+		    return $line;
+		}
 	}
 }
 
@@ -174,7 +179,10 @@ function checkLine($line, $confobj)
 		  
 		  // found the value after the indent
 		  if ($indent == true && $part != "") {
-		      
+		      if (in_array("ignore", $confobj->Options)) {
+			  // we matched the keyword, but this should be ignored.
+			  return array($line, true);
+		      }
 		      if ($findequals && $part == "=") {
 			  // this is a const var and has an equals after the $var
 			  ;
@@ -338,11 +346,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 	$varExtruderSensor = $_POST["formSensor"];
 	$varBedSensor = $_POST["formBedSensor"];
 	
-	$varFastFanPwmEn = $_POST["formFastFanPwmEn"];
+	$varFastFanPwmEn = (isset($_POST["formFastFanPwmEn"]) ? true: false);
 	
-	$varFixPIDRange =  $_POST["formFixPIDRange"];
+	$varFixPIDRange = (isset($_POST["formFixPIDRange"]) ? true: false);
 	
-	$varPIDDebug = $_POST["formPIDDebug"];
+	$varPIDDebug = (isset($_POST["formPIDDebug"]) ? true: false);
 
 	$arrclass = array();
 	
@@ -408,8 +416,9 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It")
 		l("TEMP_SENSOR_0", $varExtruderSensor);
 		l("MOTHERBOARD", $varHardware);
 		l("TEMP_SENSOR_BED", $varBedSensor);
+		l("PID_FUNCTIONAL_RANGE", ($varFixPIDRange) ? 1000 : 10, array("ignore"));
 		l("PID_FUNCTIONAL_RANGE", ($varFixPIDRange) ? 1000 : 10);
-		l("PID_DEBUG", $varPIDDebug);
+		l("PID_DEBUG", $varPIDDebug, array("define"));
 
 
 		

@@ -48,17 +48,17 @@ function doAllTests() {
 	// define tests
 	dotest(6,"#define PIDTEMP", "PIDTEMP", 'undefine', "//#define PIDTEMP");
 	dotest(7,"#define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf", "PIDTEMP", 'undefine', "//#define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf");
-	dotest(8,"// #define PIDTEMP", "PIDTEMP", 'define', "// #define PIDTEMP");
-	dotest(9,"// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf", "PIDTEMP", 'define', "// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf");
-	dotest(10,"// #define PIDTEMP", "PIDTEMP", 'undefine', "#define PIDTEMP");
-	dotest(11,"// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf", "PIDTEMP", 'undefine', "#define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf");
+	dotest(8,"// #define PIDTEMP", "PIDTEMP", 'define', " #define PIDTEMP");
+	dotest(9,"// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf", "PIDTEMP", 'define', " #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf");
+	dotest(10,"// #define PIDTEMP", "PIDTEMP", 'undefine', "// #define PIDTEMP");
+	dotest(11,"// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf", "PIDTEMP", 'undefine', "// #define PIDTEMP // fsdfsfsdfsdfsfsdfsdfsdf");
 
 
 	//const tests
 	doTest(12,"const bool X_ENDSTOPS_INVERTING = true; // set to true to invert the logic of the endstops.", "X_ENDSTOPS_INVERTING", "false", "const bool X_ENDSTOPS_INVERTING = false;      // set to true to invert the logic of the endstops.");
 	doTest(13,"const bool X_ENDSTOPS_INVERTING = false; // set to true to invert the logic of the endstops.", "X_ENDSTOPS_INVERTING", "true", "const bool X_ENDSTOPS_INVERTING = true;      // set to true to invert the logic of the endstops.");
 	doTest(13,"  #define PID_FUNCTIONAL_RANGE 10 // If the temperature difference between the target temperature and the actual temperature", "PID_FUNCTIONAL_RANGE", "1000", "#define PID_FUNCTIONAL_RANGE 1000      // If the temperature difference between the target temperature and the actual temperature");
-
+	doTest(14, "  //#define PID_DEBUG // Sends debug data to the serial port.", "PID_DEBUG", "define",   "#define PID_DEBUG // Sends debug data to the serial port.");
 	//big bad machine id parser test
 	/*#ifdef PIDTEMP
 	  //#define PID_DEBUG // Sends debug data to the serial port.
