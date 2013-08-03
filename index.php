@@ -524,7 +524,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 $line_of_text = "ARDUINO_VERSION      ?= 22\r\n";
             }
             else if (startsWith($line_of_text, "UPLOAD_RATE")) { // we found it
-                $line_of_text = "UPLOAD_RATE        ?= ".$varBaudRate\r\n";
+                $line_of_text = "UPLOAD_RATE        ?= ".$varBaudRate."\r\n";
             }
               
             $newconfig = $newconfig . $line_of_text."";
@@ -534,7 +534,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         file_put_contents("./tmp/".$dir."/Marlin/Marlin/Makefile", $newconfig);
 
         // build it
-        shell_exec('cd ./tmp/'.$dir.'/Marlin/Marlin/; make  &>  build_summary.txt');
+        shell_exec('cd ./tmp/'.$dir.'/Marlin/Marlin/; make  >  build_summary.txt 2>&1');
     
         // copy files from build and cleanup
         shell_exec('cp -f ./tmp/'.$dir.'/Marlin/Marlin/Makefile ./tmp/'.$dir.'/ > /dev/null 2>&1');
@@ -544,7 +544,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         shell_exec('cp ./tmp/'.$dir.'/Marlin/Marlin/build_summary.txt ./tmp/'.$dir.'/ > /dev/null 2>&1');
         shell_exec('rm -rf ./tmp/'.$dir.'/Marlin > /dev/null 2>&1');
         shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration.h ./tmp/Marlin/Marlin/Configuration.h > ./tmp/'.$dir.'/config_diff.diff');
-        shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration.h ./tmp/Marlin/Marlin/Configuration_adv.h > ./tmp/'.$dir.'/config_adv_diff.diff');
+        shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration_adv.h ./tmp/Marlin/Marlin/Configuration_adv.h > ./tmp/'.$dir.'/config_adv_diff.diff');
         shell_exec('zip ./tmp/'.$dir.'/marlin-'.$dir.'.zip Makefile Configuration.h Configuration_adv.h Marlin.hex build_summary.txt config_diff.diff config_adv_diff.diff > /dev/null 2>&1');
         
         // generate build summary
@@ -594,6 +594,98 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
     <script src="tooltip.js"></script>
     <link href="style.css" rel="stylesheet" type="text/css">
     <title>Ginge's Marlin Builder</title>
+    <script>
+        jQuery(document).ready(function(){
+//             $('.header').click(function(){
+//                 $(this).nextUntil('tr.header').toggle(
+//                     function() {  
+//                         $(this).find('th').eq(0).html("Click row to expand");
+//                     },
+//                     function(){
+//                         $(this).find('th').eq(0).html("Click row to");
+//                     }
+//                 );                
+//             });
+            $("#template").change(function() {
+                console.log($(this).val());
+                switch ($(this).val()) {
+                    case '1':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("0");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  false);
+                        $("input[name$='formPIDDebug']").prop("checked",  false);
+                        $("input[name$='formFixPIDRange']").prop("checked",  false);
+                        $("input[name$='formSDCardEn']").prop("checked",  false);
+                        $("input[name$='formUltipanelEn']").prop("checked",  false);                        break
+                    case '2':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("0");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  true);
+                        $("input[name$='formFixPIDRange']").prop("checked",  true); 
+                        $("input[name$='formSDCardEn']").prop("checked",  false);
+                        $("input[name$='formUltipanelEn']").prop("checked",  false);
+                        break;
+                    case '3':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("1");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  true);
+                        $("input[name$='formFixPIDRange']").prop("checked",  true);                        
+                        $("input[name$='formSDCardEn']").prop("checked",  false);
+                        $("input[name$='formUltipanelEn']").prop("checked",  false);
+                        break;
+                    case '4':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("0");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  false);
+                        $("input[name$='formFixPIDRange']").prop("checked",  false);
+                        $("input[name$='formSDCardEn']").prop("checked",  true);
+                        $("input[name$='formUltipanelEn']").prop("checked",  true);
+                        break;
+                    case '5':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("1");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  true);
+                        $("input[name$='formFixPIDRange']").prop("checked",  true);
+                        $("input[name$='formSDCardEn']").prop("checked",  true);
+                        $("input[name$='formUltipanelEn']").prop("checked",  true);
+                        break;
+                    case '6':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("1");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  false);
+                        $("input[name$='formFixPIDRange']").prop("checked",  false);
+                        $("input[name$='formSDCardEn']").prop("checked",  true);
+                        $("input[name$='formUltipanelEn']").prop("checked",  true);
+                        break;
+                    case '7':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("1");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  true);
+                        $("input[name$='formPIDDebug']").prop("checked",  true);
+                        $("input[name$='formFixPIDRange']").prop("checked",  true);
+                        $("input[name$='formSDCardEn']").prop("checked",  true);
+                        $("input[name$='formUltipanelEn']").prop("checked",  true);
+                        break;
+                        
+                        
+                }
+            });
+        });
+               
+    
+    </script>
 </head>
 
 <body>
@@ -616,11 +708,24 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
     <br/>
     <br />
     <a href="https://github.com/ginge/marlin-builder">Source for this app at GitHub</a>,
-    <a href="https://github.com/ErikZalm/Marlin">Branched from the ErikZalm Marlin tree</a>
+    <a href="https://github.com/ErikZalm/Marlin">Marlin version from the ErikZalm Marlin tree</a>
     <br/>
+    <div class="templateselect">
+        Choose a template:
+        <select id="template">
+        <option value="-1">No Template Selected</option>
+        <option value="1">Basic Ultimaker, Recommended settings</option>
+        <option value="2">Experimental Ultimaker, Experimental!</option>
+        <option value="3">Experimental Ultimaker, + heated bed,  100k, relay</option>
+        <option value="4">Ultimaker, + Ulticontroller</option>
+        <option value="5">Experimental Ultimaker, + Ulticontroller</option>
+        <option value="6">Ultimaker, + heated bed:(100k, relay), + Ulticontroller</option>
+        <option value="7">Experimental Ultimaker, + heated bed:(100k, relay), + Ulticontroller</option>
+    <select>
+    </div>
     <form action="index.php" method="post">
         <table id="mytable">
-            <tr>
+            <tr  class="header">
                 <th></th>
                 <th>Software Basic Configuration</th>
                 <th></th>
@@ -681,7 +786,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 </td>
                 <td id="rowSoftwareEndstops">?</td>
             </tr>
-            <tr>
+            <tr class="header">
                 <th></th>
                 <th>Software Advanced</th>
                 <th></th>
@@ -724,7 +829,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                     Offset:<input type="text" name="formAD595Offset" value="<?php echo($varAD595Offset);?>" /></td>
                 <td id="AD595Gain">?</td>
             </tr>
-            <tr>
+            <tr class="header">
                 <th></th>
                 <th>Software Experimental</th>
                 <th></th>
@@ -759,7 +864,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 </td>
                 <td id="rowExtruderAdvance">?</td>
             </tr>
-            <tr>
+            <tr class="header">
                 <th></th>
                 <th>Hardware</th>
                 <th></th>
@@ -892,7 +997,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 </td> 
                 <td id="rowStepsPerUnit">?</td>
             </tr>
-            <tr>
+            <tr class="header">
                 <th></th>
                 <th>Hardware Experimental</th>
                 <th>?</th>
@@ -915,7 +1020,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 </td> 
                 <td id="rowFixPIDRange">?</td>
             </tr>
-            <tr>
+            <tr class="header">
                 <th></th>
                 <th>Hardware Addons</th>
                 <th>?</th>
