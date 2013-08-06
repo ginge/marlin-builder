@@ -86,9 +86,9 @@ $varStepsPerUnitY = "78.7402";
 $varStepsPerUnitZ = "533.3333333";
 $varStepsPerUnitE = "865.888";
 
-$varSDCardEn = True;
-$varUltipanelEn = True;
-$varUltipanelClickEn = True;
+$varSDCardEn = false;
+$varUltipanelEn = false;
+$varUltipanelClickEn = false;
 $varLCDEn = False;
 
 
@@ -370,6 +370,9 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         l("DISABLE_Z",                ($varNotUseZ) ? 'true' : 'false');
         l("DISABLE_E",                ($varNotUseE) ? 'true' : 'false');
         l("max_software_endstops",    ($varSoftwareEndstopsEn) ? 'true' : 'false');
+        l("X_MAX_POS",                $varSoftwareEndstopsX);
+        l("Y_MAX_POS",                $varSoftwareEndstopsY);
+        l("Z_MAX_POS",                $varSoftwareEndstopsZ);
         l("PIDTEMP",                  $varPIDEn,       array("define"));
         l("DEFAULT_Kp",               $varPIDKp);  // this one is a problem because it is mentioned later. not a problem unless you own a makergear or mendel v9 on 12V
         l("DEFAULT_Ki",               $varPIDKi);  // this one is a problem
@@ -609,6 +612,16 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
             $("#template").change(function() {
                 console.log($(this).val());
                 switch ($(this).val()) {
+                    case '0':
+                        $("select[name$='formMachine']").val('7');
+                        $("select[name$='formSensor']").val('-1');
+                        $("select[name$='formBedSensor']").val("0");
+                        $("input[name$='formFastFanPwmEn']").prop("checked",  false);
+                        $("input[name$='formPIDDebug']").prop("checked",  false);
+                        $("input[name$='formFixPIDRange']").prop("checked",  false);
+                        $("input[name$='formSDCardEn']").prop("checked",  false);
+                        $("input[name$='formUltipanelEn']").prop("checked",  false);
+                        break;
                     case '1':
                         $("select[name$='formMachine']").val('7');
                         $("select[name$='formSensor']").val('-1');
@@ -617,7 +630,8 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("input[name$='formPIDDebug']").prop("checked",  false);
                         $("input[name$='formFixPIDRange']").prop("checked",  false);
                         $("input[name$='formSDCardEn']").prop("checked",  false);
-                        $("input[name$='formUltipanelEn']").prop("checked",  false);                        break
+                        $("input[name$='formUltipanelEn']").prop("checked",  false);                        
+                        break
                     case '2':
                         $("select[name$='formMachine']").val('7');
                         $("select[name$='formSensor']").val('-1');
