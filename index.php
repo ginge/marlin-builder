@@ -98,9 +98,9 @@ $varBedSensor = 7;
 
 $varFastFanPwmEn = true;
 
-$varFixPIDRange = false;
-
 $varPIDDebug = false;
+
+$varFilamentChangeEn = false;
 
 function chktag($tag)
 {
@@ -339,12 +339,9 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
     $varHardware                = $_POST["formMachine"];
     $varExtruderSensor          = $_POST["formSensor"];
     $varBedSensor               = $_POST["formBedSensor"];
-    
     $varFastFanPwmEn            = (isset($_POST["formFastFanPwmEn"]) ? true: false);
-    
-    $varFixPIDRange             = (isset($_POST["formFixPIDRange"]) ? true: false);
-    
     $varPIDDebug                = (isset($_POST["formPIDDebug"]) ? true: false);
+    $varFilamentChangeEn        = (isset($_POST["formFilamentChangeEn"]) ? true: false);
 
     $arrclass = array();
     
@@ -412,9 +409,9 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         l("TEMP_SENSOR_0",            $varExtruderSensor);
         l("MOTHERBOARD",              $varHardware);
         l("TEMP_SENSOR_BED",          $varBedSensor);
-        l("PID_FUNCTIONAL_RANGE",     0, array("ignore")); // we ignore the first one, as it appears in a comment. we should fix that really instead of doing this
-        l("PID_FUNCTIONAL_RANGE",     ($varFixPIDRange) ? 1000 : 10);
         l("PID_DEBUG",                $varPIDDebug, array("define"));
+        l("FILAMENTCHANGEENABLE",     $varFilamentChangeEn, array("define"));
+        
 
 
         //first parse config file
@@ -609,8 +606,17 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
 //                     }
 //                 );                
 //             });
+            $("#chkUltiPanel").change(function() {
+                if (this.checked) {
+                    $("#chkFilamentChange").prop("disabled", false);
+                    $("input[name$='formSDCardEn']").prop("checked",  true);
+                }
+                else {
+                    $("#chkFilamentChange").prop("disabled", true);
+                    $("#chkFilamentChange").prop("checked", false);
+                }                    
+            });
             $("#template").change(function() {
-                console.log($(this).val());
                 switch ($(this).val()) {
                     case '0':
                         $("select[name$='formMachine']").val('7');
@@ -618,7 +624,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("0");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  false);
                         $("input[name$='formPIDDebug']").prop("checked",  false);
-                        $("input[name$='formFixPIDRange']").prop("checked",  false);
                         $("input[name$='formSDCardEn']").prop("checked",  false);
                         $("input[name$='formUltipanelEn']").prop("checked",  false);
                         break;
@@ -628,7 +633,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("0");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  false);
                         $("input[name$='formPIDDebug']").prop("checked",  false);
-                        $("input[name$='formFixPIDRange']").prop("checked",  false);
                         $("input[name$='formSDCardEn']").prop("checked",  false);
                         $("input[name$='formUltipanelEn']").prop("checked",  false);                        
                         break
@@ -638,7 +642,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("0");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  true);
-                        $("input[name$='formFixPIDRange']").prop("checked",  true); 
                         $("input[name$='formSDCardEn']").prop("checked",  false);
                         $("input[name$='formUltipanelEn']").prop("checked",  false);
                         break;
@@ -648,7 +651,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("1");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  true);
-                        $("input[name$='formFixPIDRange']").prop("checked",  true);                        
                         $("input[name$='formSDCardEn']").prop("checked",  false);
                         $("input[name$='formUltipanelEn']").prop("checked",  false);
                         break;
@@ -658,7 +660,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("0");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  false);
-                        $("input[name$='formFixPIDRange']").prop("checked",  false);
                         $("input[name$='formSDCardEn']").prop("checked",  true);
                         $("input[name$='formUltipanelEn']").prop("checked",  true);
                         break;
@@ -668,7 +669,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("1");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  true);
-                        $("input[name$='formFixPIDRange']").prop("checked",  true);
                         $("input[name$='formSDCardEn']").prop("checked",  true);
                         $("input[name$='formUltipanelEn']").prop("checked",  true);
                         break;
@@ -678,7 +678,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("1");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  false);
-                        $("input[name$='formFixPIDRange']").prop("checked",  false);
                         $("input[name$='formSDCardEn']").prop("checked",  true);
                         $("input[name$='formUltipanelEn']").prop("checked",  true);
                         break;
@@ -688,13 +687,11 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                         $("select[name$='formBedSensor']").val("1");
                         $("input[name$='formFastFanPwmEn']").prop("checked",  true);
                         $("input[name$='formPIDDebug']").prop("checked",  true);
-                        $("input[name$='formFixPIDRange']").prop("checked",  true);
                         $("input[name$='formSDCardEn']").prop("checked",  true);
                         $("input[name$='formUltipanelEn']").prop("checked",  true);
                         break;
-                        
-                        
                 }
+                $("#chkUltiPanel").change();                // manually trigger so it updates all deps
             });
         });
                
@@ -713,9 +710,8 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         } 
     ?>
     <h1>Ginge's Marlin Builder</h1>
-    <h1>EXTREMELY MASSIVELY EXPERIMENTAL</h1>
-    If ever there was a good use for the blink tag, this is it.
-    <br>
+    <h1>EXTREMELY EXPERIMENTAL</h1>
+
     <div class="dog"><strong>This may eat your dog. Don't try this on your machine unless you are SUPER happy.</strong></div>
     <br>
     barry.carter@gmail.com
@@ -723,6 +719,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
     <br />
     <a href="https://github.com/ginge/marlin-builder">Source for this app at GitHub</a>,
     <a href="https://github.com/ErikZalm/Marlin">Marlin version from the ErikZalm Marlin tree</a>
+    <br/>
     <br/>
     <div class="templateselect">
         Choose a template:
@@ -1028,12 +1025,6 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
                 </td> 
                 <td id="rowPIDDebug">?</td>
             </tr>
-            <tr>
-                <td>Fix PID heatup time:</td>
-                <td><input type="checkbox" name="formFixPIDRange" <?php echo(chktag($varFixPIDRange));?> value="1"/>
-                </td> 
-                <td id="rowFixPIDRange">?</td>
-            </tr>
             <tr class="header">
                 <th></th>
                 <th>Hardware Addons</th>
@@ -1047,14 +1038,16 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
             </tr>
             <tr>
                 <td>Enable UltiPanel:</td>
-                <td><input type="checkbox" name="formUltipanelEn" <?php echo(chktag($varUltipanelEn));?> value="1"/>
+                <td><input type="checkbox" name="formUltipanelEn" <?php echo(chktag($varUltipanelEn));?> value="1" id="chkUltiPanel"/>
+                    Enable "Filament Change" menu<input type="checkbox" name="formFilamentChangeEn" <?php echo(chktag($varFilamentChangeEn));?> value="1" id="chkFilamentChange"/>
+                
                 </td> 
                 <td  id="rowUltipanel">?</td>
             </tr>
             <tr>
                 <td>Enable generic 16x2 LCD:</td>
                 <td><input type="checkbox" name="formLCDEn" <?php echo(chktag($varLCDEn));?> value="1"/>
-                </td> 
+                </td>
                 <td id="rowLCD">?</td>
             </tr>
             <tr>
