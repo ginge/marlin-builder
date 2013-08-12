@@ -379,9 +379,12 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         l("TEMP_HYSTERESIS",          $varM109Hyster);
         l("TEMP_RESIDENCY_TIME",      $varM109Wait);
         l("ENDSTOPPULLUPS",           $varEndstopPullupEn, array("define"));
-        l("X_ENDSTOPS_INVERTING",     ($varEndstopInvertedXEn) ? 'true' : 'false');
-        l("Y_ENDSTOPS_INVERTING",     ($varEndstopInvertedYEn) ? 'true' : 'false');
-        l("Z_ENDSTOPS_INVERTING",     ($varEndstopInvertedZEn) ? 'true' : 'false');
+        l("X_MIN_ENDSTOP_INVERTING",  ($varEndstopInvertedXEn) ? 'true' : 'false');
+        l("Y_MIN_ENDSTOP_INVERTING",  ($varEndstopInvertedYEn) ? 'true' : 'false');
+        l("Z_MIN_ENDSTOP_INVERTING",  ($varEndstopInvertedZEn) ? 'true' : 'false');
+        l("X_MAX_ENDSTOP_INVERTING",  ($varEndstopInvertedXEn) ? 'true' : 'false');
+        l("Y_MAX_ENDSTOP_INVERTING",  ($varEndstopInvertedYEn) ? 'true' : 'false');
+        l("Z_MAX_ENDSTOP_INVERTING",  ($varEndstopInvertedZEn) ? 'true' : 'false');
         l("X_ENABLE_ON",              ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
         l("Y_ENABLE_ON",              ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
         l("Z_ENABLE_ON",              ($varEnPinsActiveLowEn) ? '0' : '1');   // this is backwards I know
