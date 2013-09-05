@@ -415,6 +415,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         l("PID_DEBUG",                $varPIDDebug, array("define"));
         l("FILAMENTCHANGEENABLE",     $varFilamentChangeEn, array("define"));
         l("EEPROM_SETTINGS",          $varUltipanelEn, array("define"));
+        l("EEPROM_CHITCHAT",          $varUltipanelEn, array("define"));
         
 
 
