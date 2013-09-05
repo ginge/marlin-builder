@@ -550,7 +550,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         shell_exec('rm -rf ./tmp/'.$dir.'/Marlin > /dev/null 2>&1');
         shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration.h ./tmp/Marlin/Marlin/Configuration.h > ./tmp/'.$dir.'/config_diff.diff');
         shell_exec('diff --ignore-all-space ./tmp/'.$dir.'/Configuration_adv.h ./tmp/Marlin/Marlin/Configuration_adv.h > ./tmp/'.$dir.'/config_adv_diff.diff');
-        shell_exec('cd tmp/'.$dir.' && zip marlin-paxkage.zip Makefile Configuration.h Configuration_adv.h Marlin.hex build_summary.txt config_diff.diff config_adv_diff.diff > /dev/null 2>&1');
+        shell_exec('cd tmp/'.$dir.' && zip marlin-package.zip Makefile Configuration.h Configuration_adv.h Marlin.hex build_summary.txt config_diff.diff config_adv_diff.diff > /dev/null 2>&1');
         
         // generate build summary
         $summaryarr = file("./tmp/".$dir."/build_summary.txt");
@@ -581,7 +581,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         echo('<br/><a href="./tmp/'.$dir.'/Marlin.hex">HEX File</a>');
         echo('<br/><a href="./tmp/'.$dir.'/config_diff.diff">Diff of Configuration.h changes</a>');
         echo('<br/><a href="./tmp/'.$dir.'/config_adv_diff.diff">Diff of Configuration_adv.h changes</a>');
-        echo('<br/><a href="./tmp/'.$dir.'/marlin-'.$dir.'.zip">All of it as a ZIP</a>');
+        echo('<br/><a href="./tmp/'.$dir.'/marlin-package.zip">All of it as a ZIP</a>');
         //echo ($newconfig);
         //header("Location: thankyou.html");
         exit;
