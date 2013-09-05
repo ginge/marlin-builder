@@ -414,6 +414,7 @@ if(isset($_POST["formSubmit"]) && $_POST["formSubmit"] == "Build It") {
         l("TEMP_SENSOR_BED",          $varBedSensor);
         l("PID_DEBUG",                $varPIDDebug, array("define"));
         l("FILAMENTCHANGEENABLE",     $varFilamentChangeEn, array("define"));
+        l("EEPROM_SETTINGS",          $varUltipanelEn, array("define"));
         
 
 
