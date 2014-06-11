@@ -391,6 +391,7 @@ if (isset($_GET['dotests'])) {
                     <select name="formSensor">
                         <option value="-1">thermocouple with AD595</option>
                         <option value="-2">thermocouple with MAX6675 (only for sensor 0)</option>
+                        <option value="0">No Sensor. Danger zone! Do this only if you have a second extruder or something</option>
                         <option value="1">100k thermistor - best choice for EPCOS 100k (4.7k pullup)</option>
                         <option value="2">200k thermistor - ATC Semitec 204GT-2 (4.7k pullup)</option>
                         <option value="3">mendel-parts thermistor (4.7k pullup)</option>
